@@ -27,9 +27,11 @@ RUN  apk update \
 RUN mkdir /opt/test_frontend_scala
 COPY ./target/scala-2.13/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar /opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar
 
-CMD ["java", "-cp", "/opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar", "com.db.app.Launcher"]
+#CMD ["java", "-cp", "/opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar", "com.db.app.Launcher"]
 
 EXPOSE 8080
+
+ENTRYPOINT ["java", "-cp", "/opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar", "com.db.app.Launcher"]
 
 
 

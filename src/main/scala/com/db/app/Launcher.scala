@@ -4,7 +4,7 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 import spray.json._
@@ -28,10 +28,14 @@ object Launcher extends JsonSupport {
     val route =
       path("hello") {
         get {
-          println("received")
+          println("hello")
           complete(HttpEntity(ContentTypes.`application/json`, ResponseModel("Scala_Frontent").toJson.toString()))
         }
-      }
+      } ~
+        path("health") {
+          println("health")
+          complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
+        }
 
     val interface = "0.0.0.0"
     val port = 8080
