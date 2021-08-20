@@ -1,0 +1,37 @@
+#FROM ubuntu:latest
+#USER root
+#
+#RUN apt update
+#RUN apt install openjdk-11-jdk
+
+FROM alpine:3.14
+USER root
+
+RUN  apk update \
+  && apk upgrade \
+  && apk add ca-certificates \
+  && update-ca-certificates \
+  && apk add --update coreutils && rm -rf /var/cache/apk/*   \
+  && apk add --update openjdk11 tzdata curl unzip bash \
+  && apk add --no-cache nss \
+  && rm -rf /var/cache/apk/*
+
+#RUN echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+#RUN echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
+#RUN curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo apt-key add
+#RUN sudo apt-get update
+#RUN sudo apt-get install sbt
+#
+#RUN sbt assembly
+
+RUN mkdir /opt/test_frontend_scala
+COPY ./target/scala-2.13/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar /opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar
+
+CMD ["java", "-cp", "/opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar", "com.db.app.Launcher"]
+
+EXPOSE 8080
+
+
+
+
+

@@ -1,0 +1,29 @@
+# use glob syntax
+syntax: glob
+
+# idea project
+.idea/
+
+.bsp
+
+# DS Store files
+.DS_Store
+
+# output of building
+target/
+
+# any tmp dir
+tmp/
+
+# sbt's internal stuff
+project/project/
+
+results*
+*.log
+*.jar
+
+dmytrodev.conf
+dmytrodevinc.conf
+
+localfiles/
+logs/
