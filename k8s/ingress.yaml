@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-hosts
+
+spec:
+  rules:
+    - host: www.bortnichuk.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: main
+                port:
+                  number: 80
+          - path: "/page1"
+            pathType: Prefix
+            backend:
+              service:
+                name: webx
+                port:
+                  number: 80
+
+    - host: web1.bortnichuk.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web1
+                port:
+                  number: 80
+
+    - host: web2.bortnichuk.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web2
+                port:
+                  number: 80
+
+    - host: tomcat.bortnichuk.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tomcat
+                port:
+                  number: 8080

@@ -1,0 +1,10 @@
+# Default values for helm.
+app: test
+
+frontend:
+  image: dbortnichuk/test_frontend_scala:8
+  replicas: 3
+
+backend:
+  image: dbortnichuk/test_frontend_scala:8
+  replicas: 3

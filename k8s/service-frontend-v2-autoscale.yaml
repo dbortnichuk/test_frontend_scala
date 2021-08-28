@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-scala
+spec:
+  type: LoadBalancer
+  ports:
+    - targetPort: 8080
+      port: 8080
+  selector:
+    name: frontend-scala-autoscale

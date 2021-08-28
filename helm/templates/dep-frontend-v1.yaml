@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-frontend-scala
+  labels:
+    name: {{ .Release.Name }}-frontend-scala
+    obj: deployment
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      name: {{ .Release.Name }}-frontend-scala
+  template:
+    metadata:
+      labels:
+        name: {{ .Release.Name }}-frontend-scala
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-frontend-scala
+          image: {{ .Values.frontend.image }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP

@@ -5,7 +5,7 @@
 #RUN apt install openjdk-11-jdk
 
 FROM alpine:3.14
-USER root
+#USER root
 
 RUN  apk update \
   && apk upgrade \
@@ -25,7 +25,7 @@ RUN  apk update \
 #RUN sbt assembly
 
 RUN mkdir /opt/test_frontend_scala
-COPY ./target/scala-2.13/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar /opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar
+COPY ../target/scala-2.13/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar /opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar
 
 #CMD ["java", "-cp", "/opt/test_frontend_scala/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar", "com.db.app.Launcher"]
 

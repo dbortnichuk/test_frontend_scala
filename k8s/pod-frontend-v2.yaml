@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: frontend-scala
+  name: frontend-scala
+  namespace: default
+spec:
+  containers:
+    - name: frontend-scala
+      image: dbortnichuk/test_frontend_scala:8
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+    - name: frontend-scala-copy
+      image: dbortnichuk/test_frontend_scala:8
+      ports:
+        - containerPort: 8081
+          protocol: TCP

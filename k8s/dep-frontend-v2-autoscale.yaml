@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-scala-autoscale
+  labels:
+    name: frontend-scala-autoscale
+    obj: deployment
+spec:
+  selector:
+    matchLabels:
+      name: frontend-scala-autoscale
+  template:
+    metadata:
+      labels:
+        name: frontend-scala-autoscale
+    spec:
+      containers:
+        - name: frontend-scala-autoscale
+          image: dbortnichuk/test_frontend_scala:8
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-frontend-scala-autoscale
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v2beta1v1
+    kind: Deployment
+    name: frontend-scala-autoscale
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: 80

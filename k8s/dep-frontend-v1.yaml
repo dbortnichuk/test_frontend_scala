@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-scala
+  labels:
+    name: frontend-scala
+    obj: deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: frontend-scala
+  template:
+    metadata:
+      labels:
+        name: frontend-scala
+    spec:
+      containers:
+        - name: frontend-scala
+          image: dbortnichuk/test_frontend_scala:8
+          ports:
+            - containerPort: 8080
+              protocol: TCP
