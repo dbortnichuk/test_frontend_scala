@@ -1,3 +1,4 @@
+#Useful commands
 
 [ENV]
 java -cp target/scala-2.13/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar com.db.app.Launcher
