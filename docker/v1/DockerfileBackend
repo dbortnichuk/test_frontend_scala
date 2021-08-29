@@ -1,0 +1,23 @@
+FROM openjdk:11
+
+# docker image inspect --format='' dbortnichuk/backend_scala:latest
+LABEL mantainer.name="Dmytro Bortnichuk"
+LABEL mantainer.email="email@email.com"
+LABEL description="test backend"
+
+ENV MAIN_CLASS=com.db.app.LauncherBackend
+ENV WORK_DIR=/opt/backend_scala
+ENV JAR_NAME=test_scala_apps-assembly-0.1.0-SNAPSHOT.jar
+
+RUN mkdir $WORK_DIR
+COPY ./target/scala-2.13/$JAR_NAME $WORK_DIR/$JAR_NAME
+
+ENV BACKEND_PORT=9090
+ENV BACKEND_APP_VERSION=latest
+
+EXPOSE $BACKEND_PORT
+ENTRYPOINT java -cp /$WORK_DIR/$JAR_NAME $MAIN_CLASS
+
+# docker build --file ./docker/v1/DockerfileBackend -t dbortnichuk/backend_scala:latest .
+# docker run -it --rm -p 9090:9090 dbortnichuk/backend_scala:latest # -p inner:outer
+# docker push dbortnichuk/backend_scala:latest

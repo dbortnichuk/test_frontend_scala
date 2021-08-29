@@ -60,13 +60,6 @@ object LauncherBackend extends JsonSupport with StrictLogging {
         }
         sys.exit(1)
     }
-
-//    println(s"Server version $version now online. Please navigate to http://$interface:$port/hello\nPress RETURN to stop...")
-//    StdIn.readLine() // let it run until user presses return
-//    println("Exiting")
-//    bindingFuture
-//      .flatMap(_.unbind()) // trigger unbinding from the port
-//      .onComplete(_ => system.terminate()) // and shutdown when done
   }
 
 }

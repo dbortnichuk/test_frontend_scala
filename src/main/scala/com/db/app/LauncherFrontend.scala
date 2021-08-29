@@ -26,11 +26,11 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val backendHost = envOrElse("BACKEND_TARGET_HOST", "0.0.0.0")
   val backendPort = envOrElse("BACKEND_TARGET_PORT", "9090")
 
-  val backendEndpoint = s"http://$backendHost:$backendPort/v1"
+  val endpoint = "v1"
+  val backendEndpoint = s"http://$backendHost:$backendPort/$endpoint"
 
   def main(args: Array[String]): Unit = {
 
-    val endpoint = "v1"
     val route =
       path(endpoint) {
         get {
@@ -48,13 +48,28 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
           }
         }
       } ~
-        path("health") {
+      path(endpoint / "local") {
+        get {
           extractRequest { request =>
             logger.info(request.uri.toString())
-            complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
+            val entityFuture = HttpEntity(ContentTypes.`application/json`,
+              FrontendModel(applicationName, com.db.app.language, version, address, port, None).toJson.toString())
+            complete(entityFuture)
           }
         }
-
+      } ~
+      path("ready") {
+        extractRequest { request =>
+          logger.info(s"${request.uri.toString()} -> $backendEndpoint")
+          complete(Http().singleRequest(HttpRequest(uri = Uri(backendEndpoint))).map(_.status.value))
+        }
+      } ~
+      path("health") {
+        extractRequest { request =>
+          logger.info(request.uri.toString())
+          complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
+        }
+      }
     val interface = "0.0.0.0"
     val bindingFuture = Http(system).bindAndHandle(route, interface, port.toInt)
 
