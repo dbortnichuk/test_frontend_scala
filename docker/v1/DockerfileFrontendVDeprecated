@@ -1,0 +1,25 @@
+FROM openjdk:11
+# Image with application version hardcoded to 'deprecated' and can not be changed with FRONTEND_APP_VERSION
+# docker image inspect --format='' dbortnichuk/frontend_scala:deprecated
+LABEL mantainer.name="Dmytro Bortnichuk"
+LABEL mantainer.email="email@email.com"
+LABEL description="test frontend"
+
+ENV MAIN_CLASS=com.db.app.LauncherFrontend
+ENV WORK_DIR=/opt/frontend_scala
+ENV JAR_NAME=test_scala_apps-assembly-0.1.0-SNAPSHOT.jar
+
+RUN mkdir $WORK_DIR
+COPY ./target/scala-2.13/$JAR_NAME $WORK_DIR/$JAR_NAME
+
+ENV FRONTEND_PORT=9100
+
+ENV BACKEND_TARGET_HOST=0.0.0.0
+ENV BACKEND_TARGET_PORT=9090
+
+EXPOSE $FRONTEND_PORT
+ENTRYPOINT java -cp /$WORK_DIR/$JAR_NAME $MAIN_CLASS
+
+# docker build --file ./docker/v1/DockerfileFrontendVDeprecated -t dbortnichuk/frontend_scala:deprecated .
+# docker run -it --rm -p 9100:9100 dbortnichuk/frontend_scala:deprecated # -p inner:outer
+# docker push dbortnichuk/frontend_scala:deprecated

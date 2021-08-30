@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-scala
+  labels:
+    name: frontend-scala
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: frontend-scala
+  template:
+    metadata:
+      labels:
+        name: frontend-scala
+      name: frontend-scala
+      namespace: default
+    spec:
+      containers:
+        - name: backend-scala
+          image: dbortnichuk/frontend_scala:latest
+          env: # override app params via env vars
+            - name: FRONTEND_PORT
+              value: "9100"
+            - name: FRONTEND_APP_VERSION
+              value: "456"
+#            - name: BACKEND_TARGET_HOST # where to look for backend
+#              value: "0.0.0.0"
+#            - name: BACKEND_TARGET_PORT
+#              value: "9090"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9100
+            initialDelaySeconds: 2
+            periodSeconds: 60

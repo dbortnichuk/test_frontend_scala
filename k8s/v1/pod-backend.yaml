@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: backend-scala
+  name: backend-scala
+  namespace: default
+spec:
+  containers:
+    - name: backend-scala
+      image: dbortnichuk/backend_scala:latest
+      env: # override app params via env vars
+        - name: BACKEND_PORT
+          value: "9090"
+        - name: BACKEND_APP_VERSION
+          value: "123"
+#        ports:
+#        - containerPort: 9090
+#          protocol: TCP
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: 9090
+        initialDelaySeconds: 2
+        periodSeconds: 60

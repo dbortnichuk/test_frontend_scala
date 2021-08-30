@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: frontend-scala
+  name: frontend-scala
+  namespace: default
+spec:
+  containers:
+    - name: frontend-scala
+      image: dbortnichuk/frontend_scala:latest
+      env: # override app params via env vars
+        - name: FRONTEND_PORT
+          value: "9100"
+        - name: BACKEND_APP_VERSION
+          value: "456"
+      #      ports:
+      #        - containerPort: 9090
+      #          protocol: TCP
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: 9100
+        initialDelaySeconds: 2
+        periodSeconds: 60

@@ -21,6 +21,7 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val applicationName = "frontend-app"
 
   val version = envOrElse("FRONTEND_APP_VERSION", latestVersion)
+  //val version = "deprecated"
   val address = InetAddress.getLocalHost.getHostAddress
   val port = envOrElse("FRONTEND_PORT", "9100")
   val backendHost = envOrElse("BACKEND_TARGET_HOST", "0.0.0.0")
