@@ -14,13 +14,14 @@ k exec --stdin --tty frontend-scala -- /bin/bash
 k create -f k8s/v1/deployment-backend.yaml
 // k expose deployment backend-scala-nodeport --type=NodePort --port 9090 // will be available at 30xxx port
 k create -f k8s/v1/service-backend-nodeport.yaml
+k create -f k8s/v1/service-backend-clusterip.yaml
 minikube service backend-scala-nodeport --url
 
 k create -f k8s/v1/deployment-frontend.yaml
 // k expose deployment frontend-scala-nodeport --type=NodePort --port 9100 // will be available at 30xxx port
 k create -f k8s/v1/service-frontend-nodeport.yaml
 minikube service frontend-scala-nodeport --url
-k create -f k8s/v1/service-backend-clusterip.yaml
+
 
 k get all -o wide
 
@@ -37,4 +38,6 @@ k rollout undo deployment/frontend-scala --to-revision=1
 k rollout restart deployment/frontend-scala # redeploy with updated image of the same version, useful when working with :latest
 
 # Autoscale
-k create -f k8s/v1/hpa-frontend-scala.yaml
+minikube addons enable metrics-server
+minikube addons list
+k create -f k8s/v1/hpa-frontend.yaml //  for autoscaling to work enable metrics-server and make sure 'resources' are declared for pods in deployment

@@ -26,8 +26,12 @@ minikube start --cpus=2 --memory=3gb --disk-size=25gb
 minikube stop
 minikube delete
 minikube ssh
-
 minikube service <name> --url
+
+minikube addons enable metrics-server
+minikube addons list
+
+kubectl top node minikube # doesnt work for minikube
 
 --AWS--
 eksctl create cluster --name test1 --nodes 2 --zones us-east-1a,us-east-1b
