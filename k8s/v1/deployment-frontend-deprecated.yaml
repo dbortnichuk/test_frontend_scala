@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend-scala
-          image: dbortnichuk/frontend_scala:latest
+          image: dbortnichuk/frontend_scala:deprecated
           env: # override app params via env vars
             - name: FRONTEND_PORT
               value: "9100"

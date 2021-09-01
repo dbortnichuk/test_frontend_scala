@@ -6,7 +6,6 @@ metadata:
     name: backend-scala-clusterip
 spec:
   type: ClusterIP
-  clusterIP:
   ports:
     - targetPort: 9090
       port: 9090
