@@ -5,14 +5,14 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResp
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import akka.util.ByteString
-import com.db.app.Models.{BackendModel, FrontendModel}
+import com.db.app.Models.FrontendResponse
 import com.typesafe.scalalogging.StrictLogging
 import spray.json._
 
 import java.net.InetAddress
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Properties.envOrElse
+import scala.util.Properties.{envOrElse, envOrNone}
 import scala.util.{Failure, Success}
 
 
@@ -26,9 +26,12 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val port = envOrElse("FRONTEND_PORT", "9100")
   val backendHost = envOrElse("BACKEND_TARGET_HOST", "0.0.0.0")
   val backendPort = envOrElse("BACKEND_TARGET_PORT", "9090")
+  val backendApiKey = envOrElse("BACKEND_API_KEY", "123")
 
   val endpoint = "v1"
   val backendEndpoint = s"http://$backendHost:$backendPort/$endpoint"
+
+  val frontend = new Frontend(address, port, version)
 
   def main(args: Array[String]): Unit = {
 
@@ -37,13 +40,19 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
         get {
           extractRequest { request =>
             logger.info(s"${request.uri.toString()} -> $backendEndpoint")
-            val backendResponseFuture = Http().singleRequest(HttpRequest(uri = Uri(backendEndpoint)))
+            val entityFuture = frontend.getResponse(backendEndpoint).map(frontendResponse =>
+              HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
-            val backendModelFuture: Future[BackendModel] = backendResponseFuture.flatMap(response =>
-              entityToBytes(response.entity).map(bytes => new String(bytes).parseJson.convertTo[BackendModel]))
-
-            val entityFuture = backendModelFuture.map(backendModel => HttpEntity(ContentTypes.`application/json`,
-              FrontendModel(applicationName, com.db.app.language, version, address, port, Some(backendModel)).toJson.toString()))
+            complete(entityFuture)
+          }
+        }
+      } ~
+      path(endpoint / "protected") {
+        get {
+          extractRequest { request =>
+            logger.info(s"${request.uri.toString()} -> $backendEndpoint/protected?apiKey=$backendApiKey")
+            val entityFuture = frontend.getResponse(s"$backendEndpoint/protected?apiKey=$backendApiKey").map(frontendResponse =>
+              HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
             complete(entityFuture)
           }
@@ -54,7 +63,7 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
           extractRequest { request =>
             logger.info(request.uri.toString())
             val entityFuture = HttpEntity(ContentTypes.`application/json`,
-              FrontendModel(applicationName, com.db.app.language, version, address, port, None).toJson.toString())
+              FrontendResponse(applicationName, com.db.app.language, version, address, port, None).toJson.toString())
             complete(entityFuture)
           }
         }

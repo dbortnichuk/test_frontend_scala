@@ -24,9 +24,25 @@ spec:
               value: "9090"
             - name: BACKEND_APP_VERSION
               value: "123"
+            - name: BACKEND_SIMPLE_DATA_PATH
+              value: "/configmap-shared/shared.properties"
           readinessProbe:
             httpGet:
               path: /health
               port: 9090
             initialDelaySeconds: 2
-            periodSeconds: 60
+            periodSeconds: 20
+          volumeMounts:
+            - name: configmap-shared
+              mountPath: "/configmap-shared"
+              readOnly: true
+      volumes:
+        # You set volumes at the Pod level, then mount them into containers inside that Pod
+        - name: configmap-shared
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: shared
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "shared.properties"
+                path: "shared.properties"

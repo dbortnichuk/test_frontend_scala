@@ -11,6 +11,8 @@ k exec --stdin --tty frontend-scala -- /bin/bash
 [LOCAL DEPLOYMENT]
 # Deploy and connect
 
+k create -f k8s/v1/configmap-shared.yaml
+
 k create -f k8s/v1/deployment-backend.yaml
 // k expose deployment backend-scala-nodeport --type=NodePort --port 9090 // will be available at 30xxx port
 k create -f k8s/v1/service-backend-nodeport.yaml

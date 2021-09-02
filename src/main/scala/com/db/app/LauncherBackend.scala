@@ -1,16 +1,16 @@
 package com.db.app
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse, StatusCodes, Uri}
 import akka.http.scaladsl.server.Directives._
-import com.db.app.Models.BackendModel
+import com.db.app.Models.ApiException
 import com.typesafe.scalalogging.StrictLogging
 import spray.json._
 
 import java.net.InetAddress
 import scala.concurrent.duration._
 import scala.concurrent.Await
-import scala.util.Properties.envOrElse
+import scala.util.Properties.{envOrElse, envOrNone}
 import scala.util.{Failure, Success}
 
 object LauncherBackend extends JsonSupport with StrictLogging {
@@ -20,6 +20,10 @@ object LauncherBackend extends JsonSupport with StrictLogging {
   val version = envOrElse("BACKEND_APP_VERSION", latestVersion)
   val address = InetAddress.getLocalHost.getHostAddress
   val port = envOrElse("BACKEND_PORT", "9090")
+  val dataPath = envOrNone("BACKEND_SIMPLE_DATA_PATH")
+
+  val backend = new Backend(address, port, version, dataPath)
+  val backendEndpointHealth = s"http://$address:$port/health"
 
   def main(args: Array[String]): Unit = {
 
@@ -29,11 +33,37 @@ object LauncherBackend extends JsonSupport with StrictLogging {
         get {
           extractRequest { request =>
             logger.info(request.uri.toString())
-            complete(HttpEntity(ContentTypes.`application/json`,
-              BackendModel(applicationName, com.db.app.language, version, address, port).toJson.toString()))
+            val responseFuture = backend.getResponse().map(response =>
+              HttpEntity(ContentTypes.`application/json`, response.toJson.toString))
+            complete(responseFuture)
           }
         }
       } ~
+        path(endpoint / "protected") {
+          get {
+            parameters("apiKey".as[String]) { apiKey =>
+              extractRequest { request =>
+                logger.info(request.uri.toString())
+                val responseFuture = backend.getResponseProtected(apiKey).map(response =>
+                  HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString)))
+                  .recoverWith {
+                    case ae: ApiException =>
+                      HttpResponse(ae.status, entity = HttpEntity(ContentTypes.`application/json`, ae.toJson.toString()))
+                    case t: Throwable => HttpResponse(StatusCodes.InternalServerError, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, t.getMessage))
+                  }
+                complete(responseFuture)
+              }
+            }
+          }
+        } ~
+        path("ready") {
+          get {
+            extractRequest { request =>
+              logger.info(s"${request.uri.toString()} -> /health")
+              complete(Http().singleRequest(HttpRequest(uri = Uri(backendEndpointHealth))).map(_.status.value))
+            }
+          }
+        } ~
         path("health") {
           get {
             extractRequest { request =>

@@ -25,15 +25,22 @@ spec:
             - name: FRONTEND_APP_VERSION
               value: "456"
             - name: BACKEND_TARGET_HOST # where to look for backend
-              value: "backend-scala-clusterip" # backend service name will be used as internal DNS name of the service
+#              value: "backend-scala-clusterip" # backend service name will be used as internal DNS name of the service
+              valueFrom:
+                configMapKeyRef:
+                  name: shared
+                  key: BACKEND_TARGET_HOST
             - name: BACKEND_TARGET_PORT
-              value: "9090"
+              valueFrom:
+                configMapKeyRef:
+                  name: shared
+                  key: BACKEND_TARGET_PORT
           readinessProbe:
             httpGet:
               path: /ready
               port: 9100
             initialDelaySeconds: 2
-            periodSeconds: 60
+            periodSeconds: 20
           resources:
             requests:
               memory: "128Mi"

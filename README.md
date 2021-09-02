@@ -7,15 +7,15 @@ curl -X GET  http://localhost:8080/hello
 
 [DOCKER]
 docker build -t dbortnichuk/test_frontend_scala:2 .
-docker build --file ./docker/Dockerfile -t dbortnichuk/test_frontend_scala:2 .
+docker build --file ./docker/v1/DockerfileBackend -t dbortnichuk/backend_scala:latest .
 
-docker tag  test_frontend_scala:1 dbortnichuk/test_frontend_scala:1
+docker tag  test_frontend_scala:1 dbortnichuk/backend_scala:latest
 
 docker login
 
-docker push dbortnichuk/test_frontend_scala:tagname
+docker push dbortnichuk/backend_scala:latest
 
-docker run -it --rm -p 8080:8080 dbortnichuk/test_frontend_scala:2
+docker run -it --rm -p 9090:9090 dbortnichuk/backend_scala:latest
 
 docker rmi <id> -f
 
