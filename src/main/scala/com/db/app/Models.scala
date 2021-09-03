@@ -1,7 +1,5 @@
 package com.db.app
 
-import com.db.app.Models.ResponseModel
-
 object Models {
 
   sealed trait ResponseModel {
@@ -30,6 +28,6 @@ object Models {
                              data: Map[String, String] = Map.empty) extends ResponseModel
 
 
-  case class ApiException(status: Int, msg: String) extends RuntimeException(msg)
+  case class ApiException(status: Int, msg: String, application: String) extends RuntimeException(msg)
 
 }

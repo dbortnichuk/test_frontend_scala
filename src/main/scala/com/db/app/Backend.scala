@@ -24,7 +24,7 @@ class Backend(address: String, port: String, version: String, dataPath: Option[S
   }
 
   def getResponseProtected(apiKey: String): Future[BackendResponse] = {
-    if (apiKey == backendApiKey) getResponse() else Future.failed(ApiException(401, "Unauthorized, key does not match"))
+    if (apiKey == backendApiKey) getResponse() else Future.failed(ApiException(401, "Unauthorized, key does not match", applicationName))
   }
 }
 

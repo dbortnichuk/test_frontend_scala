@@ -3,7 +3,7 @@
 [ENV]
 java -cp target/scala-2.13/test_frontend_scala-assembly-0.1.0-SNAPSHOT.jar com.db.app.Launcher
 
-curl -X GET  http://localhost:8080/hello
+curl -X GET  http://localhost:9090/v1
 
 [DOCKER]
 docker build -t dbortnichuk/test_frontend_scala:2 .

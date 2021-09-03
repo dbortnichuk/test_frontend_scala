@@ -26,7 +26,7 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val port = envOrElse("FRONTEND_PORT", "9100")
   val backendHost = envOrElse("BACKEND_TARGET_HOST", "0.0.0.0")
   val backendPort = envOrElse("BACKEND_TARGET_PORT", "9090")
-  val backendApiKey = envOrElse("BACKEND_API_KEY", "123")
+  val backendApiKey = envOrElse("BACKEND_API_KEY", "")
 
   val endpoint = "v1"
   val backendEndpoint = s"http://$backendHost:$backendPort/$endpoint"
@@ -51,9 +51,11 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
         get {
           extractRequest { request =>
             logger.info(s"${request.uri.toString()} -> $backendEndpoint/protected?apiKey=$backendApiKey")
-            val entityFuture = frontend.getResponse(s"$backendEndpoint/protected?apiKey=$backendApiKey").map(frontendResponse =>
-              HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
-
+            val entityFuture = frontend.getResponse(s"$backendEndpoint/protected?apiKey=$backendApiKey").map {
+              case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
+              case Left(apiException) =>
+                HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
+            }
             complete(entityFuture)
           }
         }

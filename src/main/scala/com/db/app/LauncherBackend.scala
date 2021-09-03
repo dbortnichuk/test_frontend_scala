@@ -46,10 +46,13 @@ object LauncherBackend extends JsonSupport with StrictLogging {
                 logger.info(request.uri.toString())
                 val responseFuture = backend.getResponseProtected(apiKey).map(response =>
                   HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString)))
-                  .recoverWith {
+                  .recover {
                     case ae: ApiException =>
                       HttpResponse(ae.status, entity = HttpEntity(ContentTypes.`application/json`, ae.toJson.toString()))
-                    case t: Throwable => HttpResponse(StatusCodes.InternalServerError, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, t.getMessage))
+                    case t: Throwable =>
+                      HttpResponse(StatusCodes.InternalServerError,
+                        entity = HttpEntity(ContentTypes.`application/json`,
+                          ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, applicationName).toJson.toString()))
                   }
                 complete(responseFuture)
               }

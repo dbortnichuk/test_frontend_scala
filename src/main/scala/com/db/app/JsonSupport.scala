@@ -7,6 +7,6 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val BackendModelFormat: RootJsonFormat[BackendResponse] = jsonFormat6(BackendResponse)
   implicit val FrontendModelFormat: RootJsonFormat[FrontendResponse] = jsonFormat6(FrontendResponse)
-  implicit val ApiFormat: RootJsonFormat[ApiException] = jsonFormat2(ApiException)
+  implicit val ApiFormat: RootJsonFormat[ApiException] = jsonFormat3(ApiException)
 
 }
