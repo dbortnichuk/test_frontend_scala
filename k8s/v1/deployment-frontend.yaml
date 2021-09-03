@@ -35,6 +35,14 @@ spec:
                 configMapKeyRef:
                   name: shared
                   key: BACKEND_TARGET_PORT
+            - name: BACKEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: shared
+                  key: BACKEND_API_KEY
+#          envFrom: # inject all vars from secret
+#            - secretRef:
+#                name: shared
           readinessProbe:
             httpGet:
               path: /ready

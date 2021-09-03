@@ -43,3 +43,10 @@ k rollout restart deployment/frontend-scala # redeploy with updated image of the
 minikube addons enable metrics-server
 minikube addons list
 k create -f k8s/v1/hpa-frontend.yaml //  for autoscaling to work enable metrics-server and make sure 'resources' are declared for pods in deployment
+
+# Secret
+echo -n "key123" | base64 # a2V5MTIz
+echo -n "a2V5MTIz" | base64 --decode # key123
+
+k create -f k8s/v1/secret-shared.yaml
+k get secret shared -o yaml # view data, describe does not show

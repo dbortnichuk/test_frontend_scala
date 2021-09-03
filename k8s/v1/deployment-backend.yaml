@@ -36,7 +36,7 @@ spec:
             - name: configmap-shared
               mountPath: "/configmap-shared"
               readOnly: true
-      volumes:
+      volumes: # mount by name in volumeMounts
         # You set volumes at the Pod level, then mount them into containers inside that Pod
         - name: configmap-shared
           configMap:
@@ -46,3 +46,6 @@ spec:
             items:
               - key: "shared.properties"
                 path: "shared.properties"
+#        - name: secret-shared # each entry will be in separate file
+#          secret:
+#            secretName: shared
