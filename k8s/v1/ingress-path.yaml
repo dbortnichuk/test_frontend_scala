@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-path
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /v1
+spec:
+  rules:
+    - host: www.bortnichuk.com
+      http:
+        paths:
+          - path: /frontend
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-scala-clusterip
+                port:
+                  number: 9100
+          - path: /backend
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-scala-clusterip
+                port:
+                  number: 9090

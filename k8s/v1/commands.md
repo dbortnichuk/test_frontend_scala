@@ -9,6 +9,14 @@ k port-forward pod/frontend-scala 9100:9100  # local port : pod port
 k exec --stdin --tty frontend-scala -- /bin/bash
 
 [LOCAL DEPLOYMENT]
+# Secret
+# Will enable access via /v1/protected endpoint
+echo -n "key123" | base64 # a2V5MTIz
+echo -n "a2V5MTIz" | base64 --decode # key123
+
+k create -f k8s/v1/secret-shared.yaml
+k get secret shared -o yaml # view data, describe does not show
+
 # Deploy and connect
 
 k create -f k8s/v1/configmap-shared.yaml
@@ -22,6 +30,7 @@ minikube service backend-scala-nodeport --url
 k create -f k8s/v1/deployment-frontend.yaml
 // k expose deployment frontend-scala-nodeport --type=NodePort --port 9100 // will be available at 30xxx port
 k create -f k8s/v1/service-frontend-nodeport.yaml
+k create -f k8s/v1/service-frontend-clusterip.yaml // for ingress
 minikube service frontend-scala-nodeport --url
 
 
@@ -40,13 +49,27 @@ k rollout undo deployment/frontend-scala --to-revision=1
 k rollout restart deployment/frontend-scala # redeploy with updated image of the same version, useful when working with :latest
 
 # Autoscale
+# local
 minikube addons enable metrics-server
 minikube addons list
+
+# AWS
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl get deployment metrics-server -n kube-system
+
 k create -f k8s/v1/hpa-frontend.yaml //  for autoscaling to work enable metrics-server and make sure 'resources' are declared for pods in deployment
 
-# Secret
-echo -n "key123" | base64 # a2V5MTIz
-echo -n "a2V5MTIz" | base64 --decode # key123
 
-k create -f k8s/v1/secret-shared.yaml
-k get secret shared -o yaml # view data, describe does not show
+# Ingress
+k create -f k8s/v1/ingress-host.yaml
+k create -f k8s/v1/ingress-path.yaml
+---AWS Contour---
+kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
+kubectl get all -n projectcontour -o wide
+
+
+// create A records in AWS pointing to loadbalancer created by Contour
+// deploy your app objects -> secret, configmap, deployments, hpa, clusterip
+
+
+

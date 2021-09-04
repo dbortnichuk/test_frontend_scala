@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-host
+spec:
+  rules:
+    - host: frontend.bortnichuk.com
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-scala-clusterip
+                port:
+                  number: 9100
+    - host: backend.bortnichuk.com
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-scala-clusterip
+                port:
+                  number: 9090
+    - host: protected.bortnichuk.com
+      http:
+        paths:
+          - path: /v1/protected
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-scala-clusterip
+                port:
+                  number: 9100

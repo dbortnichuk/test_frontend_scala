@@ -20,6 +20,15 @@ docker run -it --rm -p 9090:9090 dbortnichuk/backend_scala:latest
 docker rmi <id> -f
 
 [k8s]
+--General--
+kubectl get componentstatuses
+kubectl cluster-info
+kubectl get nodes
+
+kubectl config get-contexts
+kubectl config current-context
+kubectl config use-context my-context
+
 --Local--
 minikube start
 minikube start --cpus=2 --memory=3gb --disk-size=25gb
