@@ -68,20 +68,18 @@ k create -f k8s/v1/ingress-path.yaml
 minikube addons enable ingress
 kubectl get all -n ingress-nginx // check if ingress controller is running
 
-k get ingress // check deployed ingresses hosts/ports
-
 // add to /etc/hosts local dns entries, smth like
 192.168.49.2    frontend.bortnichuk.com backend.bortnichuk.com protected.bortnichuk.com
 192.168.49.2    www.bortnichuk.com
 
 ---AWS---
-
-
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/aws/deploy.yaml
+kubectl get all -n ingress-nginx // check if ingress controller is running
 
 // create A records in AWS pointing to loadbalancer created by nginx ingress
 // deploy your app objects eg. secret, configmap, deployments, hpa, clusterip
 
-
+k get ingress // check deployed ingresses hosts/ports
 // for both local and AWS app will be available like:
 http://www.bortnichuk.com/frontend
 http://www.bortnichuk.com/backend

@@ -3,7 +3,8 @@ kind: Ingress
 metadata:
   name: ingress-path
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /v1
+    nginx.ingress.kubernetes.io/rewrite-target: /v1 # /frontend -> /v1
+    kubernetes.io/ingress.class: "nginx" # for nginx in AWS
 spec:
   rules:
     - host: www.bortnichuk.com

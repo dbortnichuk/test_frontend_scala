@@ -2,6 +2,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-host
+  annotations:
+    kubernetes.io/ingress.class: "nginx" # for nginx in AWS
 spec:
   rules:
     - host: frontend.bortnichuk.com
