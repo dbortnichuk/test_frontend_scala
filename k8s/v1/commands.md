@@ -63,13 +63,36 @@ k create -f k8s/v1/hpa-frontend.yaml //  for autoscaling to work enable metrics-
 # Ingress
 k create -f k8s/v1/ingress-host.yaml
 k create -f k8s/v1/ingress-path.yaml
----AWS Contour---
-kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
-kubectl get all -n projectcontour -o wide
+
+---Local---
+minikube addons enable ingress
+kubectl get all -n ingress-nginx // check if ingress controller is running
+
+k get ingress // check deployed ingresses hosts/ports
+
+// add to /etc/hosts local dns entries, smth like
+192.168.49.2    frontend.bortnichuk.com backend.bortnichuk.com protected.bortnichuk.com
+192.168.49.2    www.bortnichuk.com
+
+---AWS---
 
 
-// create A records in AWS pointing to loadbalancer created by Contour
-// deploy your app objects -> secret, configmap, deployments, hpa, clusterip
+
+// create A records in AWS pointing to loadbalancer created by nginx ingress
+// deploy your app objects eg. secret, configmap, deployments, hpa, clusterip
+
+
+// for both local and AWS app will be available like:
+http://www.bortnichuk.com/frontend
+http://www.bortnichuk.com/backend
+http://frontend.bortnichuk.com/v1
+http://backend.bortnichuk.com/v1
+http://protected.bortnichuk.com/v1/protected
+
+
+
+
+
 
 
 

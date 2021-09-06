@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: ingress-path
   annotations:
-    ingress.kubernetes.io/rewrite-target: /v1
+    nginx.ingress.kubernetes.io/rewrite-target: /v1
 spec:
   rules:
     - host: www.bortnichuk.com
