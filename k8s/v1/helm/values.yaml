@@ -1,0 +1,22 @@
+appName: test_scala_apps
+
+domain: bortnichuk.com
+
+frontend:
+  name: frontend-scala
+  image: dbortnichuk/frontend_scala:latest
+  apiVersion: v1
+  port: 9100
+  nodePort: 30100
+  replicas:
+    min: 1
+    max: 4
+
+backend:
+  name: backend-scala
+  image: dbortnichuk/backend_scala:latest
+  apiVersion: v1
+  port: 9090
+  nodePort: 30090
+  replicas:
+    min: 1

@@ -1,15 +1,15 @@
 apiVersion: v2
-name: helm-auto-example
-description: A Helm chart for Kubernetes
+name: helm-v1
+description: Helm chart for k8s v1
 type: application
 version: 0.1.0
 appVersion: "1.16.0"
 keywords:
   - abc
   - def
-home: https://docurl.com
+home: https://nodocurl.com
 sources:
-  - https://github.com/dbortnichuk/
+  - https://github.com/dbortnichuk/test_scala_apps
 maintainers:
   - name: Dmytro Bortnichuk
     email: dbortnichuk@gmail.com

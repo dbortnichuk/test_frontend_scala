@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.frontend.name }}-clusterip
+  labels:
+    name: {{ .Values.frontend.name }}-clusterip
+spec:
+  type: ClusterIP
+  ports:
+    - targetPort: {{ .Values.frontend.port }}
+      port: {{ .Values.frontend.port }}
+      protocol: TCP
+  selector:
+    name: {{ .Values.frontend.name }}

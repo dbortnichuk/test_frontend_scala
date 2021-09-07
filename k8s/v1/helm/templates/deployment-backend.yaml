@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.name }}
+  labels:
+    name: {{ .Values.backend.name }}
+spec:
+  replicas: {{ .Values.backend.replicas.min }}
+  selector:
+    matchLabels:
+      name: {{ .Values.backend.name }}
+  template:
+    metadata:
+      labels:
+        name: {{ .Values.backend.name }}
+      name: {{ .Values.backend.name }}
+      namespace: default
+    spec:
+      containers:
+        - name: {{ .Values.backend.name }}
+          image: {{ .Values.backend.image }}
+          env: # override app params via env vars
+            - name: BACKEND_PORT
+              value: "9090"
+            - name: BACKEND_APP_VERSION
+              value: "123"
+            - name: BACKEND_SIMPLE_DATA_PATH
+              value: "/configmap-shared/shared.properties"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 2
+            periodSeconds: 20
+          volumeMounts:
+            - name: configmap-shared
+              mountPath: "/configmap-shared"
+              readOnly: true
+      volumes: # mount by name in volumeMounts
+        # You set volumes at the Pod level, then mount them into containers inside that Pod
+        - name: configmap-shared
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: shared
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "shared.properties"
+                path: "shared.properties"
+#        - name: secret-shared # each entry will be in separate file
+#          secret:
+#            secretName: shared
