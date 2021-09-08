@@ -28,30 +28,45 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val backendPort = envOrElse("BACKEND_TARGET_PORT", "9090")
   val backendApiKey = envOrElse("BACKEND_API_KEY", "")
 
-  val endpoint = "v1"
-  val backendEndpoint = s"http://$backendHost:$backendPort/$endpoint"
+  val backendBaseUrl = s"http://$backendHost:$backendPort/$SegmentApiVersion"
 
   val frontend = new Frontend(address, port, version)
 
   def main(args: Array[String]): Unit = {
 
     val route =
-      path(endpoint) {
+      path(SegmentApiVersion) {
         get {
           extractRequest { request =>
-            logger.info(s"${request.uri.toString()} -> $backendEndpoint")
-            val entityFuture = frontend.getResponse(backendEndpoint).map(frontendResponse =>
-              HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
+            parameters(ParamSource.?) { source =>
+              logger.info(s"${request.uri.toString()} -> $backendBaseUrl")
+              val entityFuture = frontend.getResponse(backendBaseUrl).map(frontendResponse =>
+                HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
-            complete(entityFuture)
+              complete(entityFuture)
+            }
           }
         }
       } ~
-      path(endpoint / "protected") {
+      path(SegmentApiVersion / SegmentDirect) {
         get {
           extractRequest { request =>
-            logger.info(s"${request.uri.toString()} -> $backendEndpoint/protected?apiKey=$backendApiKey")
-            val entityFuture = frontend.getResponse(s"$backendEndpoint/protected?apiKey=$backendApiKey").map {
+            parameters(ParamSource.?) { source =>
+              logger.info(s"${request.uri.toString()} -> $backendBaseUrl")
+              val entityFuture = frontend.getResponse(backendBaseUrl).map(frontendResponse =>
+                HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
+
+              complete(entityFuture)
+            }
+          }
+        }
+      } ~
+      path(SegmentApiVersion / SegmentProtected) {
+        get {
+          extractRequest { request =>
+            val backendUrl = s"$backendBaseUrl/$SegmentProtected?$ParamApiKey=$backendApiKey"
+            logger.info(s"${request.uri.toString()} -> $backendUrl")
+            val entityFuture = frontend.getResponse(backendUrl).map {
               case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
               case Left(apiException) =>
                 HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
@@ -60,7 +75,7 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
           }
         }
       } ~
-      path(endpoint / "local") {
+      path(SegmentApiVersion / SegmentLocal) {
         get {
           extractRequest { request =>
             logger.info(request.uri.toString())
@@ -70,13 +85,13 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
           }
         }
       } ~
-      path("ready") {
+      path(SegmentReady) {
         extractRequest { request =>
-          logger.info(s"${request.uri.toString()} -> $backendEndpoint")
-          complete(Http().singleRequest(HttpRequest(uri = Uri(backendEndpoint))).map(_.status.value))
+          logger.info(s"${request.uri.toString()} -> $backendBaseUrl")
+          complete(Http().singleRequest(HttpRequest(uri = Uri(backendBaseUrl))).map(_.status.value))
         }
       } ~
-      path("health") {
+      path(SegmentHealth) {
         extractRequest { request =>
           logger.info(request.uri.toString())
           complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
@@ -87,7 +102,7 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
 
     bindingFuture.onComplete {
       case Success(b) ⇒
-        println(s"Server version $version now online. Please navigate to http://$interface:$port/$endpoint\nPress Ctrl-C to stop...")
+        println(s"Server version $version now online. Please navigate to http://$interface:$port/$SegmentApiVersion\nPress Ctrl-C to stop...")
         sys.addShutdownHook {
           Await.result(b.unbind(), 30.seconds)
           system.terminate()

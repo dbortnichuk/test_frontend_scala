@@ -52,6 +52,7 @@ k rollout restart deployment/frontend-scala # redeploy with updated image of the
 # local
 minikube addons enable metrics-server
 minikube addons list
+k top node
 
 # AWS
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -90,8 +91,17 @@ http://protected.bortnichuk.com/v1/protected
 [helm]
 helm install infra1 ./k8s/v1/helm
 helm list
-helm install infra1
+helm uninstall infra1
 
+helm install infra2 ./k8s/v1/helm --set frontend.replicas.min=2
+helm upgrade infra2 ./k8s/v1/helm --set frontend.replicas.min=1
+helm upgrade infra2 ./k8s/v1/helm -f prd-values.yaml # supply custom values file here
+
+helm package ./k8s/v1/helm/
+helm upgrade infra2 ./helm-v1-0.1.0.tgz
+
+helm list
+helm uninstall infra2
 
 
 
