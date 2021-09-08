@@ -18,4 +18,4 @@ spec:
           averageUtilization: 10
   behavior:
     scaleDown:
-      stabilizationWindowSeconds: 30 # scaledown delay
+      stabilizationWindowSeconds: 20 # scaledown delay

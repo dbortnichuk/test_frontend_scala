@@ -87,6 +87,11 @@ http://frontend.bortnichuk.com/v1
 http://backend.bortnichuk.com/v1
 http://protected.bortnichuk.com/v1/protected
 
+[helm]
+helm install infra1 ./k8s/v1/helm
+helm list
+helm install infra1
+
 
 
 
