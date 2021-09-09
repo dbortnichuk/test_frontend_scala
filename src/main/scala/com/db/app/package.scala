@@ -19,4 +19,9 @@ package object app {
   val SegmentDirect = "direct"
   val SegmentHealth = "health"
   val SegmentReady = "ready"
+
+  val ParamDataSourceSimpleVal = "simple"
+  val ParamDataSourceVolumeVal = "volume"
+  val ParamDataSourceMysqlVal = "mysql"
+  val ParamDataSourceS3Val = "s3"
 }

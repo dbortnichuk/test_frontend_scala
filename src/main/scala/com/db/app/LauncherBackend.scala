@@ -20,11 +20,11 @@ object LauncherBackend extends JsonSupport with StrictLogging {
   val version = envOrElse("BACKEND_APP_VERSION", latestVersion)
   val address = InetAddress.getLocalHost.getHostAddress
   val port = envOrElse("BACKEND_PORT", "9090")
-  val dataPath = envOrNone("BACKEND_SIMPLE_DATA_PATH")
+  val simpleDataPath = envOrNone("BACKEND_SIMPLE_DATA_PATH")
 
   val SegmentBackendApiVersion = "v1"
 
-  val backend = new Backend(address, port, version, dataPath)
+  val backend = new Backend(address, port, version, simpleDataPath, )
   val backendBaseUrl = s"http://$address:$port"
 
   def main(args: Array[String]): Unit = {
@@ -34,7 +34,7 @@ object LauncherBackend extends JsonSupport with StrictLogging {
         get {
           extractRequest { request =>
             parameters(ParamDataSource.?) { dataSourceOption =>
-              val responseFuture = backend.getResponse(request).map(response =>
+              val responseFuture = backend.getResponse(request, dataSourceOption).map(response =>
                 HttpEntity(ContentTypes.`application/json`, response.toJson.toString))
               complete(responseFuture)
             }
@@ -43,9 +43,9 @@ object LauncherBackend extends JsonSupport with StrictLogging {
       } ~
         path(SegmentBackendApiVersion / SegmentProtected) {
           get {
-                          extractRequest { request =>
-                parameters(ParamApiKey.as[String]) { apiKey =>
-                val responseFuture = backend.getResponseProtected(request, apiKey).map(response =>
+            extractRequest { request =>
+                parameters(ParamDataSource.?, ParamApiKey.as[String]) { (dataSourceOption, apiKey) =>
+                val responseFuture = backend.getResponseProtected(request, dataSourceOption, apiKey).map(response =>
                   HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString)))
                   .recover {
                     case ae: ApiException =>

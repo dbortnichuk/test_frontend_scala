@@ -8,14 +8,28 @@ import com.typesafe.scalalogging.StrictLogging
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 
-class Backend(address: String, port: String, version: String, dataPath: Option[String]) extends StrictLogging {
+class Backend(address: String,
+              port: String,
+              version: String,
+              simpleDataPath: Option[String],
+              volumeDataPath: String,
+             ) extends StrictLogging {
 
   private val backendApiKey = "key123"
 
-  def getResponse(request: HttpRequest): Future[BackendResponse] = {
+  private val dataSourceRegistry = Map(
+    ParamDataSourceSimpleVal -> new SimpleDAL(simpleDataPath),
+    ParamDataSourceVolumeVal -> new VolumeDAL(volumeDataPath),
+    ParamDataSourceMysqlVal -> new MysqlDAL(),
+    ParamDataSourceS3Val -> new S3DAL()
+  )
+
+  def getResponse(request: HttpRequest, dataSourceOption: Option[String]): Future[BackendResponse] = {
     logger.info(request.uri.toString())
 
-    val dataPropertiesFuture = Future(Utils.loadProperties(dataPath))
+    val dataSource = dataSourceRegistry(dataSourceOption.getOrElse(ParamDataSourceSimpleVal))
+
+    val dataPropertiesFuture = Future(Utils.loadProperties(simpleDataPath))
     val responseFuture = dataPropertiesFuture.map(dataProperties =>
         BackendResponse(
           applicationName,
@@ -27,8 +41,9 @@ class Backend(address: String, port: String, version: String, dataPath: Option[S
     responseFuture
   }
 
-  def getResponseProtected(request: HttpRequest, apiKey: String): Future[BackendResponse] = {
-    if (apiKey == backendApiKey) getResponse(request) else Future.failed(ApiException(401, "Unauthorized, key does not match", applicationName))
+  def getResponseProtected(request: HttpRequest, dataSourceOption: Option[String], apiKey: String): Future[BackendResponse] = {
+    if (apiKey == backendApiKey) getResponse(request, dataSourceOption)
+    else Future.failed(ApiException(401, "Unauthorized, key does not match", applicationName))
   }
 }
 
