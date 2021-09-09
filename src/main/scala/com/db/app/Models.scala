@@ -30,4 +30,5 @@ object Models {
 
   case class ApiException(status: Int, msg: String, application: String) extends RuntimeException(msg)
 
+  case class Param(k: String, v: String)
 }

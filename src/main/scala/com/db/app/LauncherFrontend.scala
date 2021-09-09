@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResp
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import akka.util.ByteString
-import com.db.app.Models.FrontendResponse
+import com.db.app.Models.{FrontendResponse, Param}
 import com.typesafe.scalalogging.StrictLogging
 import spray.json._
 
@@ -28,19 +28,20 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val backendPort = envOrElse("BACKEND_TARGET_PORT", "9090")
   val backendApiKey = envOrElse("BACKEND_API_KEY", "")
 
-  val backendBaseUrl = s"http://$backendHost:$backendPort/$SegmentApiVersion"
+  val backendBaseUrl = s"http://$backendHost:$backendPort"
+  val SegmentFrontendApiVersion = "v1"
 
   val frontend = new Frontend(address, port, version)
 
   def main(args: Array[String]): Unit = {
 
     val route =
-      path(SegmentApiVersion) {
+      path(SegmentFrontendApiVersion) {
         get {
           extractRequest { request =>
-            parameters(ParamSource.?) { source =>
-              logger.info(s"${request.uri.toString()} -> $backendBaseUrl")
-              val entityFuture = frontend.getResponse(backendBaseUrl).map(frontendResponse =>
+            parameters(ParamDataSource.?) { dataSourceOption =>
+              val params = dataSourceOption.toSeq.map(sourceVal => Param(ParamDataSource, sourceVal))
+              val entityFuture = frontend.getResponse(request, backendBaseUrl, Seq(LauncherBackend.SegmentBackendApiVersion), params).map(frontendResponse =>
                 HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
               complete(entityFuture)
@@ -48,61 +49,67 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
           }
         }
       } ~
-      path(SegmentApiVersion / SegmentDirect) {
-        get {
-          extractRequest { request =>
-            parameters(ParamSource.?) { source =>
-              logger.info(s"${request.uri.toString()} -> $backendBaseUrl")
-              val entityFuture = frontend.getResponse(backendBaseUrl).map(frontendResponse =>
-                HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
+        path(SegmentFrontendApiVersion / SegmentDirect) {
+          get {
+            extractRequest { request =>
+              parameters(ParamDataSource.?) { sourceOption =>
+                val params = sourceOption.toSeq.map(sourceVal => Param(ParamDataSource, sourceVal))
+                val entityFuture = frontend.getResponseDirect(request, "database, s3 or other ds uri", Seq("required path stub"), params)
+                  .map(frontendResponse => HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
+                complete(entityFuture)
+              }
+            }
+          }
+        } ~
+        path(SegmentFrontendApiVersion / SegmentProtected) {
+          get {
+            extractRequest { request =>
+              val entityFuture = frontend.getResponse(
+                request,
+                backendBaseUrl,
+                Seq(SegmentFrontendApiVersion, SegmentProtected),
+                Seq(Param(ParamApiKey, backendApiKey)))
+                .map {
+                  case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
+                  case Left(apiException) =>
+                    HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
+                }
               complete(entityFuture)
             }
           }
-        }
-      } ~
-      path(SegmentApiVersion / SegmentProtected) {
-        get {
+        } ~
+        path(SegmentFrontendApiVersion / SegmentLocal) {
+          get {
+            extractRequest { request =>
+              logger.info(request.uri.toString())
+
+              val entityFuture = HttpEntity(ContentTypes.`application/json`,
+                FrontendResponse(applicationName, com.db.app.language, version, address, port, None).toJson.toString())
+              complete(entityFuture)
+            }
+          }
+        } ~
+        path(SegmentReady) {
           extractRequest { request =>
-            val backendUrl = s"$backendBaseUrl/$SegmentProtected?$ParamApiKey=$backendApiKey"
+            val backendUrl = Utils.buildURLQuery(backendBaseUrl, Seq(LauncherBackend.SegmentBackendApiVersion))
             logger.info(s"${request.uri.toString()} -> $backendUrl")
-            val entityFuture = frontend.getResponse(backendUrl).map {
-              case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
-              case Left(apiException) =>
-                HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
-            }
-            complete(entityFuture)
+            complete(Http().singleRequest(HttpRequest(uri = Uri(backendUrl))).map(_.status.value))
           }
-        }
-      } ~
-      path(SegmentApiVersion / SegmentLocal) {
-        get {
+        } ~
+        path(SegmentHealth) {
           extractRequest { request =>
             logger.info(request.uri.toString())
-            val entityFuture = HttpEntity(ContentTypes.`application/json`,
-              FrontendResponse(applicationName, com.db.app.language, version, address, port, None).toJson.toString())
-            complete(entityFuture)
+
+            complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
           }
         }
-      } ~
-      path(SegmentReady) {
-        extractRequest { request =>
-          logger.info(s"${request.uri.toString()} -> $backendBaseUrl")
-          complete(Http().singleRequest(HttpRequest(uri = Uri(backendBaseUrl))).map(_.status.value))
-        }
-      } ~
-      path(SegmentHealth) {
-        extractRequest { request =>
-          logger.info(request.uri.toString())
-          complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
-        }
-      }
     val interface = "0.0.0.0"
     val bindingFuture = Http(system).bindAndHandle(route, interface, port.toInt)
 
     bindingFuture.onComplete {
       case Success(b) ⇒
-        println(s"Server version $version now online. Please navigate to http://$interface:$port/$SegmentApiVersion\nPress Ctrl-C to stop...")
+        println(s"Server version $version now online. Please navigate to http://$interface:$port/$SegmentFrontendApiVersion\nPress Ctrl-C to stop...")
         sys.addShutdownHook {
           Await.result(b.unbind(), 30.seconds)
           system.terminate()

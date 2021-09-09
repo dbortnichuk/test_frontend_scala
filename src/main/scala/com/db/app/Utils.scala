@@ -1,5 +1,6 @@
 package com.db.app
 
+import com.db.app.Models.Param
 import org.apache.commons.io.IOUtils.toByteArray
 
 import java.io.{FileInputStream, InputStream}
@@ -29,6 +30,17 @@ object Utils {
       }
     }
     dataProperties
+  }
+
+  def buildURLQuery(baseUrl: String, path: Seq[String], params: Seq[Param] = Seq.empty[Param]): String = {
+    val baseUrlStripped = if(baseUrl.endsWith("/")) baseUrl.substring(0, baseUrl.length - 1) else baseUrl
+    val urlPath = if (path.isEmpty) baseUrlStripped else s"$baseUrlStripped/${path.mkString("/")}"
+    val urlQuery = if (params.isEmpty) urlPath else s"$urlPath?${params.map(param => s"${param.k}=${param.v}").mkString("&")}"
+    urlQuery
+  }
+
+  def main(args: Array[String]): Unit = {
+    println(buildURLQuery("http://example.com", Seq("v1", "path"), Seq(Param("apiKey", "123"), Param("ds", "s3"))))
   }
 
 }

@@ -11,11 +11,10 @@ package object app {
   implicit val system = ActorSystem(Behaviors.empty, "my-system")
   implicit val executionContext = system.executionContext
 
-  val ParamSource = "source"
+  val ParamDataSource = "ds"
   val ParamApiKey= "apiKey"
 
   val SegmentProtected = "protected"
-  val SegmentApiVersion = "v1"
   val SegmentLocal = "local"
   val SegmentDirect = "direct"
   val SegmentHealth = "health"

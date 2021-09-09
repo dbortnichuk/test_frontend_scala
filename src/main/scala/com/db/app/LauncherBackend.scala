@@ -22,28 +22,30 @@ object LauncherBackend extends JsonSupport with StrictLogging {
   val port = envOrElse("BACKEND_PORT", "9090")
   val dataPath = envOrNone("BACKEND_SIMPLE_DATA_PATH")
 
+  val SegmentBackendApiVersion = "v1"
+
   val backend = new Backend(address, port, version, dataPath)
-  val backendEndpointHealth = s"http://$address:$port/$SegmentHealth"
+  val backendBaseUrl = s"http://$address:$port"
 
   def main(args: Array[String]): Unit = {
 
     val route =
-      path(SegmentApiVersion) {
+      path(SegmentBackendApiVersion) {
         get {
           extractRequest { request =>
-            logger.info(request.uri.toString())
-            val responseFuture = backend.getResponse().map(response =>
-              HttpEntity(ContentTypes.`application/json`, response.toJson.toString))
-            complete(responseFuture)
+            parameters(ParamDataSource.?) { dataSourceOption =>
+              val responseFuture = backend.getResponse(request).map(response =>
+                HttpEntity(ContentTypes.`application/json`, response.toJson.toString))
+              complete(responseFuture)
+            }
           }
         }
       } ~
-        path(SegmentApiVersion / SegmentProtected) {
+        path(SegmentBackendApiVersion / SegmentProtected) {
           get {
-            parameters(ParamApiKey.as[String]) { apiKey =>
-              extractRequest { request =>
-                logger.info(request.uri.toString())
-                val responseFuture = backend.getResponseProtected(apiKey).map(response =>
+                          extractRequest { request =>
+                parameters(ParamApiKey.as[String]) { apiKey =>
+                val responseFuture = backend.getResponseProtected(request, apiKey).map(response =>
                   HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString)))
                   .recover {
                     case ae: ApiException =>
@@ -62,7 +64,7 @@ object LauncherBackend extends JsonSupport with StrictLogging {
           get {
             extractRequest { request =>
               logger.info(s"${request.uri.toString()} -> /$SegmentHealth")
-              complete(Http().singleRequest(HttpRequest(uri = Uri(backendEndpointHealth))).map(_.status.value))
+              complete(Http().singleRequest(HttpRequest(uri = Uri(Utils.buildURLQuery(backendBaseUrl, Seq(SegmentHealth))))).map(_.status.value))
             }
           }
         } ~
@@ -80,7 +82,7 @@ object LauncherBackend extends JsonSupport with StrictLogging {
 
     bindingFuture.onComplete {
       case Success(b) ⇒
-        logger.info(s"Server version $version now online. Please navigate to http://$interface:$port/$SegmentApiVersion\nPress Ctrl-C to stop...")
+        logger.info(s"Server version $version now online. Please navigate to http://$interface:$port/$SegmentBackendApiVersion\nPress Ctrl-C to stop...")
         sys.addShutdownHook {
           Await.result(b.unbind(), 30.seconds)
           system.terminate()

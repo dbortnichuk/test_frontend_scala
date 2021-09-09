@@ -3,7 +3,7 @@ package com.db.app
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, Uri}
 import com.db.app.LauncherFrontend.{applicationName, entityToBytes}
-import com.db.app.Models.{ApiException, BackendResponse, FrontendResponse}
+import com.db.app.Models.{ApiException, BackendResponse, FrontendResponse, Param}
 import com.typesafe.scalalogging.StrictLogging
 import spray.json._
 
@@ -12,8 +12,15 @@ import scala.util.{Failure, Success, Try}
 
 class Frontend(address: String, port: String, version: String) extends JsonSupport with StrictLogging {
 
-  def getResponse(backendEndpoint: String): Future[Either[ApiException, FrontendResponse]] = {
-    val backendHttpResponseFuture = Http().singleRequest(HttpRequest(uri = Uri(backendEndpoint)))
+  def getResponse(
+                   request: HttpRequest,
+                   backendUri: String,
+                   path: Seq[String],
+                   params: Seq[Param]): Future[Either[ApiException, FrontendResponse]] = {
+    val backandUriQuery = Utils.buildURLQuery(backendUri, path, params)
+    logger.info(s"${request.uri.toString()} -> $backandUriQuery")
+
+    val backendHttpResponseFuture = Http().singleRequest(HttpRequest(uri = Uri(backandUriQuery)))
     val backendResponseFuture = backendHttpResponseFuture.flatMap{response =>
       entityToBytes(response.entity).map{bytes =>
         val jsonObj = new String(bytes).parseJson
@@ -32,6 +39,14 @@ class Frontend(address: String, port: String, version: String) extends JsonSuppo
         case Left(apiException) => Left(apiException)
       }
     frontendResponseFuture
+  }
+
+  def getResponseDirect(
+                         request: HttpRequest,
+                         backendUri: String,
+                         path: Seq[String],
+                         params: Seq[Param]): Future[Either[ApiException, FrontendResponse]] = {
+    Future.failed(new NotImplementedError())
   }
 
 
