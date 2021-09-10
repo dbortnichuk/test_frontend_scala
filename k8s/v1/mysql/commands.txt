@@ -1,0 +1,18 @@
+
+// docker network create mysql-net
+// docker run --network mysql-net --name db-mysql -e MYSQL_ROOT_PASSWORD=pass -d mysql:latest
+// docker run --network mysql-net -it --rm mysql:latest mysql -hdb-mysql -uroot -ppass
+
+[Run empty db]
+docker run --name db-mysql -e MYSQL_ROOT_PASSWORD=pass -p3306:3306 -d mysql:8.0.26
+docker exec -it db-mysql bash
+mysql -uroot -ppass
+
+// init db, enter commands from sql.txt
+
+mysqldump -hlocalhost -uroot -ppass mysqltestdb > schema.sql // prepare database init for docker image
+
+
+docker build --file ./k8s/v1/mysql/Dockerfile -t dbortnichuk/db-mysql-test:8.0.26 .
+docker run -it --rm -d -p 3306:3306 dbortnichuk/db-mysql-test:8.0.26
+docker push dbortnichuk/db-mysql-test:8.0.26

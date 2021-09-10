@@ -39,6 +39,22 @@ object Utils {
     urlQuery
   }
 
+  implicit class OptionOps[T](maybeValue: Option[T]){
+    def getOrFail(t:  => Throwable): T = {
+      maybeValue match {
+        case None => throw t
+        case Some(x) => x
+      }
+    }
+
+    def finallyDo(noneFunc: => Unit, someFunc: T => Unit): Unit = {
+      maybeValue match {
+        case None => noneFunc
+        case Some(x) => someFunc(x)
+      }
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     println(buildURLQuery("http://example.com", Seq("v1", "path"), Seq(Param("apiKey", "123"), Param("ds", "s3"))))
   }

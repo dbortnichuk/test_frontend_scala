@@ -12,6 +12,7 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.util.Properties.{envOrElse, envOrNone}
 import scala.util.{Failure, Success}
+import Utils._
 
 object LauncherBackend extends JsonSupport with StrictLogging {
 
@@ -21,10 +22,11 @@ object LauncherBackend extends JsonSupport with StrictLogging {
   val address = InetAddress.getLocalHost.getHostAddress
   val port = envOrElse("BACKEND_PORT", "9090")
   val simpleDataPath = envOrNone("BACKEND_SIMPLE_DATA_PATH")
+  val volumeDataPath = envOrNone("BACKEND_VOLUME_DATA_PATH").getOrFail(new IllegalStateException("volume data path not found"))
 
   val SegmentBackendApiVersion = "v1"
 
-  val backend = new Backend(address, port, version, simpleDataPath, )
+  val backend = new Backend(address, port, version, simpleDataPath, volumeDataPath)
   val backendBaseUrl = s"http://$address:$port"
 
   def main(args: Array[String]): Unit = {
