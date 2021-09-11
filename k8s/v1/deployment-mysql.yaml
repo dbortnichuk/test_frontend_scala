@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-mysql
+  labels:
+    name: db-mysql
+spec:
+  selector:
+    matchLabels:
+      name: db-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: db-mysql
+      name: db-mysql
+      namespace: default
+    spec:
+      containers:
+        - name: db-mysql
+          image: dbortnichuk/db-mysql-test:8.0.26
+          env:
+            - name: MYSQL_DATABASE
+              value: "mysqltestdb"
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: shared
+                  key: MYSQL_ROOT_PASSWORD
+          ports:
+            - containerPort: 3306
+              name: db-mysql
+              # defaut db in image disappears if this is configured
+#          volumeMounts:
+#            - name: db-mysql-pv
+#              mountPath: /var/lib/mysql
+#      volumes:
+#        - name: db-mysql-pv
+#          persistentVolumeClaim:
+#            claimName: db-mysql-pvc

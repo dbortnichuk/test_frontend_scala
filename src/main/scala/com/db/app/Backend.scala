@@ -13,6 +13,8 @@ class Backend(address: String,
               version: String,
               simpleDataPath: Option[String],
               volumeDataPath: String,
+              mysqlHost: String,
+              mysqlPort: String
              ) extends StrictLogging {
 
   private val backendApiKey = "key123"
@@ -20,24 +22,29 @@ class Backend(address: String,
   private val dataSourceRegistry = Map(
     ParamDataSourceSimpleVal -> new SimpleDAL(simpleDataPath),
     ParamDataSourceVolumeVal -> new VolumeDAL(volumeDataPath),
-    ParamDataSourceMysqlVal -> new MysqlDAL(),
+    ParamDataSourceMysqlVal -> new MysqlDAL(mysqlHost, mysqlPort),
     ParamDataSourceS3Val -> new S3DAL()
   )
 
   def getResponse(request: HttpRequest, dataSourceOption: Option[String]): Future[BackendResponse] = {
     logger.info(request.uri.toString())
 
-    val dataSource = dataSourceRegistry(dataSourceOption.getOrElse(ParamDataSourceSimpleVal))
+    val dataSource = dataSourceRegistry.getOrElse(
+      dataSourceOption.getOrElse(ParamDataSourceSimpleVal), // if param not provided
+      dataSourceRegistry(ParamDataSourceSimpleVal) // if param val not known
+    )
 
-    val dataPropertiesFuture = Future(Utils.loadProperties(simpleDataPath))
-    val responseFuture = dataPropertiesFuture.map(dataProperties =>
+    //val dataPropertiesFuture = Future(Utils.loadProperties(simpleDataPath))
+    val responseFuture = dataSource.get().map(data=>
         BackendResponse(
           applicationName,
           com.db.app.language,
           version,
           address,
           port,
-          dataProperties.entrySet().asScala.map(entry => (entry.getKey.toString, entry.getValue.toString)).toMap))
+          data
+        )
+    )
     responseFuture
   }
 

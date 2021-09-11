@@ -22,11 +22,14 @@ object LauncherBackend extends JsonSupport with StrictLogging {
   val address = InetAddress.getLocalHost.getHostAddress
   val port = envOrElse("BACKEND_PORT", "9090")
   val simpleDataPath = envOrNone("BACKEND_SIMPLE_DATA_PATH")
-  val volumeDataPath = envOrNone("BACKEND_VOLUME_DATA_PATH").getOrFail(new IllegalStateException("volume data path not found"))
+  //val volumeDataPath = envOrNone("BACKEND_VOLUME_DATA_PATH").getOrFail(new IllegalStateException("volume data path not found"))
+  val volumeDataPath = envOrElse("BACKEND_VOLUME_DATA_PATH", "")
+  val mysqlHost = envOrElse("DB_MYSQL_HOST", "0.0.0.0")
+  val mysqlPort = envOrElse("DB_MYSQL_PORT", "3306")
 
   val SegmentBackendApiVersion = "v1"
 
-  val backend = new Backend(address, port, version, simpleDataPath, volumeDataPath)
+  val backend = new Backend(address, port, version, simpleDataPath, volumeDataPath, mysqlHost, mysqlPort)
   val backendBaseUrl = s"http://$address:$port"
 
   def main(args: Array[String]): Unit = {

@@ -4,6 +4,7 @@ import com.db.app.Models.Param
 import org.apache.commons.io.IOUtils.toByteArray
 
 import java.io.{FileInputStream, InputStream}
+import java.sql.ResultSet
 import java.util.Properties
 import scala.util.control.NonFatal
 
@@ -51,6 +52,17 @@ object Utils {
       maybeValue match {
         case None => noneFunc
         case Some(x) => someFunc(x)
+      }
+    }
+  }
+
+  implicit class ResultSetStream(resultSet: ResultSet) {
+    def toLazyList: LazyList[ResultSet] = {
+      LazyList.from{
+        new Iterator[ResultSet] {
+          def hasNext = resultSet.next()
+          def next = resultSet
+        }
       }
     }
   }
