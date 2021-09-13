@@ -4,7 +4,6 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse, StatusCodes, Uri}
 import akka.http.scaladsl.server.Directives._
 import com.db.app.Models.ApiException
-import com.typesafe.scalalogging.StrictLogging
 import spray.json._
 
 import java.net.InetAddress
@@ -12,9 +11,9 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.util.Properties.{envOrElse, envOrNone}
 import scala.util.{Failure, Success}
-import Utils._
+import akka.http.scaladsl.server.ExceptionHandler
 
-object LauncherBackend extends JsonSupport with StrictLogging {
+object LauncherBackend extends JsonSupport with Logging {
 
   val applicationName = "backend-app"
 
@@ -26,6 +25,8 @@ object LauncherBackend extends JsonSupport with StrictLogging {
   val volumeDataPath = envOrElse("BACKEND_VOLUME_DATA_PATH", "")
   val mysqlHost = envOrElse("DB_MYSQL_HOST", "0.0.0.0")
   val mysqlPort = envOrElse("DB_MYSQL_PORT", "3306")
+//  val mysqlHost = envOrElse("DB_MYSQL_HOST", "192.168.49.2")
+//  val mysqlPort = envOrElse("DB_MYSQL_PORT", "30306")
 
   val SegmentBackendApiVersion = "v1"
 
@@ -37,30 +38,42 @@ object LauncherBackend extends JsonSupport with StrictLogging {
     val route =
       path(SegmentBackendApiVersion) {
         get {
-          extractRequest { request =>
-            parameters(ParamDataSource.?) { dataSourceOption =>
-              val responseFuture = backend.getResponse(request, dataSourceOption).map(response =>
-                HttpEntity(ContentTypes.`application/json`, response.toJson.toString))
-              complete(responseFuture)
+          handleExceptions(exceptionHandler) {
+            extractRequest { request =>
+              parameters(ParamDataSource.?) { dataSourceOption =>
+                val responseFuture = backend.getResponse(request, dataSourceOption).map(response =>
+                  HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString)))
+//                  .recover {
+//                    case ae: ApiException =>
+//                      HttpResponse(ae.status, entity = HttpEntity(ContentTypes.`application/json`, ae.toJson.toString()))
+//                    case t: Throwable =>
+//                      HttpResponse(StatusCodes.InternalServerError,
+//                        entity = HttpEntity(ContentTypes.`application/json`,
+//                          ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, applicationName).toJson.toString()))
+//                  }
+                complete(responseFuture)
+              }
             }
           }
         }
       } ~
         path(SegmentBackendApiVersion / SegmentProtected) {
           get {
-            extractRequest { request =>
+            handleExceptions(exceptionHandler) {
+              extractRequest { request =>
                 parameters(ParamDataSource.?, ParamApiKey.as[String]) { (dataSourceOption, apiKey) =>
-                val responseFuture = backend.getResponseProtected(request, dataSourceOption, apiKey).map(response =>
-                  HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString)))
-                  .recover {
-                    case ae: ApiException =>
-                      HttpResponse(ae.status, entity = HttpEntity(ContentTypes.`application/json`, ae.toJson.toString()))
-                    case t: Throwable =>
-                      HttpResponse(StatusCodes.InternalServerError,
-                        entity = HttpEntity(ContentTypes.`application/json`,
-                          ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, applicationName).toJson.toString()))
-                  }
-                complete(responseFuture)
+                  val responseFuture = backend.getResponseProtected(request, dataSourceOption, apiKey).map(response =>
+                    HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString)))
+//                    .recover {
+//                      case ae: ApiException =>
+//                        HttpResponse(ae.status, entity = HttpEntity(ContentTypes.`application/json`, ae.toJson.toString()))
+//                      case t: Throwable =>
+//                        HttpResponse(StatusCodes.InternalServerError,
+//                          entity = HttpEntity(ContentTypes.`application/json`,
+//                            ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, applicationName).toJson.toString()))
+//                    }
+                  complete(responseFuture)
+                }
               }
             }
           }
@@ -99,6 +112,17 @@ object LauncherBackend extends JsonSupport with StrictLogging {
         }
         sys.exit(1)
     }
+  }
+
+  val exceptionHandler = ExceptionHandler {
+    case ae: ApiException =>
+      complete(
+        HttpResponse(ae.status, entity = HttpEntity(ContentTypes.`application/json`, ae.toJson.toString())))
+    case t: Throwable =>
+      complete(
+        HttpResponse(StatusCodes.InternalServerError,
+        entity = HttpEntity(ContentTypes.`application/json`,
+          ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, applicationName).toJson.toString())))
   }
 
 }

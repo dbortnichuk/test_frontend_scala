@@ -3,9 +3,6 @@ package com.db.app
 import akka.http.scaladsl.model.HttpRequest
 import com.db.app.LauncherBackend.applicationName
 import com.db.app.Models.{ApiException, BackendResponse}
-import com.typesafe.scalalogging.StrictLogging
-
-import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 
 class Backend(address: String,
@@ -15,7 +12,7 @@ class Backend(address: String,
               volumeDataPath: String,
               mysqlHost: String,
               mysqlPort: String
-             ) extends StrictLogging {
+             ) extends Logging {
 
   private val backendApiKey = "key123"
 
@@ -27,24 +24,13 @@ class Backend(address: String,
   )
 
   def getResponse(request: HttpRequest, dataSourceOption: Option[String]): Future[BackendResponse] = {
-    logger.info(request.uri.toString())
-
     val dataSource = dataSourceRegistry.getOrElse(
       dataSourceOption.getOrElse(ParamDataSourceSimpleVal), // if param not provided
       dataSourceRegistry(ParamDataSourceSimpleVal) // if param val not known
     )
-
-    //val dataPropertiesFuture = Future(Utils.loadProperties(simpleDataPath))
-    val responseFuture = dataSource.get().map(data=>
-        BackendResponse(
-          applicationName,
-          com.db.app.language,
-          version,
-          address,
-          port,
-          data
-        )
-    )
+    logger.info(s"${request.uri.toString()} -> ${dataSource.uri}")
+    val responseFuture = withErrorLogging(dataSource.get().map(data =>
+      BackendResponse(applicationName, com.db.app.language, version, address, port, data)))
     responseFuture
   }
 

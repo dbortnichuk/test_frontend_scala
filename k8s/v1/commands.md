@@ -94,7 +94,7 @@ k create -f k8s/v1/pvc-mysql.yaml
 k create -f k8s/v1/deployment-mysql.yaml
 k create -f k8s/v1/service-mysql-clusterip.yaml
 k create -f k8s/v1/service-mysql-nodeport.yaml
-minikube service service-mysql-nodeport --url
+minikube service db-mysql-nodeport --url
 
 [helm]
 helm install infra1 ./k8s/v1/helm

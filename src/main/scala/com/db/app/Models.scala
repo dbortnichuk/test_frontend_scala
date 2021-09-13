@@ -28,7 +28,7 @@ object Models {
                              data: Map[String, String] = Map.empty) extends ResponseModel
 
 
-  case class ApiException(status: Int, msg: String, application: String) extends RuntimeException(msg)
+  case class ApiException(status: Int, msg: String, origin: String) extends RuntimeException(msg)
 
   case class Param(k: String, v: String)
 }

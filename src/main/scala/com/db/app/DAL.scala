@@ -3,12 +3,14 @@ package com.db.app
 import scala.jdk.CollectionConverters._
 import java.sql.{Connection, DriverManager}
 import scala.concurrent.Future
-import scala.util.{Try, Using}
+import scala.util.{Failure, Success, Try, Using}
 import Utils._
-import akka.actor.Status.Success
+import akka.http.scaladsl.model.StatusCodes
+import com.db.app.Models.ApiException
 
 trait DAL {
   def get(): Future[Map[String, String]]
+  def uri: String
 }
 
 class SimpleDAL(volumePath: Option[String]) extends DAL {
@@ -18,10 +20,14 @@ class SimpleDAL(volumePath: Option[String]) extends DAL {
         dataProperties.entrySet().asScala.map(entry => (entry.getKey.toString, entry.getValue.toString)).toMap)
     responseFuture
   }
+
+  override def uri: String = volumePath.getOrElse("/DefaultSimpleData.properties")
 }
 
 class VolumeDAL(volumePath: String) extends DAL {
   override def get(): Future[Map[String, String]] = Future.failed(new NotImplementedError())
+
+  override def uri: String = ???
 }
 
 class MysqlDAL(mysqlHost: String, mysqlPort: String) extends DAL {
@@ -39,29 +45,13 @@ class MysqlDAL(mysqlHost: String, mysqlPort: String) extends DAL {
         val data = resultSet.toLazyList.map(result => (result.getString("value"), result.getString("description"))).toMap
         data
       }
-    }.flatMap { dataTry => dataTry match {
+    }.flatMap {
       case Success(data) => Future.successful(data)
-      case Failure(t) => Future.successful(data)
+      case Failure(t) => Future.failed(ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, s"${getClass.getName}"))
     }
-    }
-
-
-
-//    Try{
-//      val connection = DriverManager.getConnection(url, username, password)
-//      val statement = connection.createStatement()
-//      val resultSet = statement.executeQuery("SELECT value, description FROM mysqltestdb.testdata")
-//      val data = resultSet.toLazyList.map(result => (result.getString("value"), result.getString("description"))).toMap
-//      data
-////      while ( resultSet.next() ) {
-////        val value = resultSet.getString("value")
-////        val description = resultSet.getString("description")
-////        println("value, description = " + value + ", " + description)
-////      }
-//    } match
-
-    Future.failed(new NotImplementedError())
   }
+
+  override def uri: String = url
 }
 
 object MysqlDAL {
@@ -99,4 +89,6 @@ object MysqlDAL {
 
 class S3DAL extends DAL {
   override def get(): Future[Map[String, String]] = Future.failed(new NotImplementedError())
+
+  override def uri: String = ???
 }

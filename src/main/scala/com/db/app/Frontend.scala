@@ -1,7 +1,7 @@
 package com.db.app
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpRequest, Uri}
+import akka.http.scaladsl.model.{HttpRequest, StatusCodes, Uri}
 import com.db.app.LauncherFrontend.{applicationName, entityToBytes}
 import com.db.app.Models.{ApiException, BackendResponse, FrontendResponse, Param}
 import com.typesafe.scalalogging.StrictLogging
@@ -10,7 +10,13 @@ import spray.json._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class Frontend(address: String, port: String, version: String) extends JsonSupport with StrictLogging {
+class Frontend(
+                address: String,
+                port: String,
+                version: String,
+                mysqlHost: String,
+                mysqlPort: String
+              ) extends JsonSupport with Logging {
 
   def getResponse(
                    request: HttpRequest,
@@ -41,12 +47,16 @@ class Frontend(address: String, port: String, version: String) extends JsonSuppo
     frontendResponseFuture
   }
 
-  def getResponseDirect(
-                         request: HttpRequest,
-                         backendUri: String,
-                         path: Seq[String],
-                         params: Seq[Param]): Future[Either[ApiException, FrontendResponse]] = {
-    Future.failed(new NotImplementedError())
+  val dataSource = new MysqlDAL(mysqlHost, mysqlPort)
+  def getResponseDirect(request: HttpRequest): Future[Either[ApiException, FrontendResponse]] = {
+    logger.info(s"${request.uri.toString()} -> ${dataSource.uri}")
+
+    val responseFuture = withErrorLogging(dataSource.get().map(data =>
+      Right(FrontendResponse(applicationName, com.db.app.language, version, address, port,
+        Some(BackendResponse("mysql", "", "", mysqlHost, mysqlPort, data)))))
+    )
+      .recover(t => Left(ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, s"${getClass.getName}")))
+    responseFuture
   }
 
 

@@ -27,11 +27,15 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val backendHost = envOrElse("BACKEND_TARGET_HOST", "0.0.0.0")
   val backendPort = envOrElse("BACKEND_TARGET_PORT", "9090")
   val backendApiKey = envOrElse("BACKEND_API_KEY", "")
+  val mysqlHost = envOrElse("DB_MYSQL_HOST", "0.0.0.0")
+  val mysqlPort = envOrElse("DB_MYSQL_PORT", "3306")
+//    val mysqlHost = envOrElse("DB_MYSQL_HOST", "192.168.49.2")
+//    val mysqlPort = envOrElse("DB_MYSQL_PORT", "30306")
 
   val backendBaseUrl = s"http://$backendHost:$backendPort"
   val SegmentFrontendApiVersion = "v1"
 
-  val frontend = new Frontend(address, port, version)
+  val frontend = new Frontend(address, port, version, mysqlHost, mysqlPort)
 
   def main(args: Array[String]): Unit = {
 
@@ -54,7 +58,7 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
             extractRequest { request =>
               parameters(ParamDataSource.?) { sourceOption =>
                 val params = sourceOption.toSeq.map(sourceVal => Param(ParamDataSource, sourceVal))
-                val entityFuture = frontend.getResponseDirect(request, "database, s3 or other ds uri", Seq("required path stub"), params)
+                val entityFuture = frontend.getResponseDirect(request)
                   .map(frontendResponse => HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
                 complete(entityFuture)
