@@ -20,3 +20,10 @@ backend:
   nodePort: 30090
   replicas:
     min: 1
+
+mysql:
+  name: mysql
+  image: dbortnichuk/db-mysql-test:8.0.26
+  port: 3306
+  nodePort: 30306
+

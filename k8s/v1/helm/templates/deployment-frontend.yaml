@@ -40,6 +40,16 @@ spec:
                 secretKeyRef:
                   name: shared
                   key: BACKEND_API_KEY
+            - name: DB_MYSQL_HOST # where to look for backend
+              valueFrom:
+                configMapKeyRef:
+                  name: shared
+                  key: DB_MYSQL_HOST
+            - name: DB_MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: shared
+                  key: DB_MYSQL_PORT
           #          envFrom: # inject all vars from secret
           #            - secretRef:
           #                name: shared

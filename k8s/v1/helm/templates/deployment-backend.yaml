@@ -26,6 +26,16 @@ spec:
               value: "123"
             - name: BACKEND_SIMPLE_DATA_PATH
               value: "/configmap-shared/shared.properties"
+            - name: DB_MYSQL_HOST # where to look for backend
+              valueFrom:
+                configMapKeyRef:
+                  name: shared
+                  key: DB_MYSQL_HOST
+            - name: DB_MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: shared
+                  key: DB_MYSQL_PORT
           readinessProbe:
             httpGet:
               path: /health

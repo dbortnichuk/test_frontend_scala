@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mysql.name }}-nodeport
+  labels:
+    name: {{ .Values.mysql.name }}-nodeport
+spec:
+  type: NodePort
+  ports:
+    - targetPort: {{ .Values.mysql.port }}
+      port: {{ .Values.mysql.port }}
+      nodePort: {{ .Values.mysql.nodePort }}
+  selector:
+    name: {{ .Values.mysql.name }}

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.mysql.name }}
+  labels:
+    name: {{ .Values.mysql.name }}
+spec:
+  selector:
+    matchLabels:
+      name: {{ .Values.mysql.name }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: {{ .Values.mysql.name }}
+      name: {{ .Values.mysql.name }}
+      namespace: default
+    spec:
+      containers:
+        - name: {{ .Values.mysql.name }}
+          image: {{ .Values.mysql.image }}
+          env:
+            - name: MYSQL_DATABASE
+              value: "mysqltestdb"
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: shared
+                  key: MYSQL_ROOT_PASSWORD
+          ports:
+            - containerPort: {{ .Values.mysql.port }}
+              name: {{ .Values.mysql.name }}
+              # defaut db in image disappears if this is configured
+#          volumeMounts:
+#            - name: db-mysql-pv
+#              mountPath: /var/lib/mysql
+#      volumes:
+#        - name: db-mysql-pv
+#          persistentVolumeClaim:
+#            claimName: db-mysql-pvc
