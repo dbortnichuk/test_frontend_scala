@@ -47,9 +47,11 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
             extractRequest { request =>
               parameters(ParamDataSource.?) { dataSourceOption =>
                 val params = dataSourceOption.toSeq.map(sourceVal => Param(ParamDataSource, sourceVal))
-                val entityFuture = frontend.getResponse(request, backendBaseUrl, Seq(LauncherBackend.SegmentBackendApiVersion), params).map(frontendResponse =>
-                  HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
-
+                val entityFuture = frontend.getResponse(request, backendBaseUrl, Seq(LauncherBackend.SegmentBackendApiVersion), params)                  .map {
+                  case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
+                  case Left(apiException) =>
+                    HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
+                }
                 complete(entityFuture)
               }
             }
@@ -62,7 +64,11 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
               extractRequest { request =>
                 parameters(ParamDataSource.?) { sourceOption =>
                   val entityFuture = frontend.getResponseDirect(request)
-                    .map(frontendResponse => HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
+                    .map {
+                      case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
+                      case Left(apiException) =>
+                        HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
+                    }
 
                   complete(entityFuture)
                 }
