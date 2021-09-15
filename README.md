@@ -43,6 +43,15 @@ minikube addons list
 
 kubectl top node minikube # doesnt work for minikube
 
+---for network policies---
+minikube start --network-plugin=cni
+
+curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+rm cilium-linux-amd64.tar.gz
+cilium install
+cilium status
+
 --AWS--
 eksctl create cluster --name test1 --nodes 2 --zones us-east-1a,us-east-1b
 eksctl delete cluster --name test1

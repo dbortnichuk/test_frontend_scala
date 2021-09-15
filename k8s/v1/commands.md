@@ -96,6 +96,12 @@ k create -f k8s/v1/service-mysql-clusterip.yaml
 k create -f k8s/v1/service-mysql-nodeport.yaml
 minikube service db-mysql-nodeport --url
 
+[network policy]
+
+
+
+k create -f k8s/v1/netpol-mysql.yaml // make mysql available only from backend pods
+
 [helm]
 helm install infra1 ./k8s/v1/helm
 helm list

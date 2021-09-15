@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Values.mysql.name }}-netpol
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      name: {{ .Values.mysql.name }} # pod to protect
+  policyTypes:
+#    - Egress
+    - Ingress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            name: {{ .Values.backend.name }} # pod to provide access from
+#  egress: # use smth like this for backup mysql
+#    - to:
+#        - podSelector:
+#            matchLabels:
+#              name: mysql
+#      ports:
+#        - protocol: TCP
+#          port: 3306
+#
+#    - to:
+#        - podSelector:
+#            matchLabels:
+#              name: payroll
+#      ports:
+#        - protocol: TCP
+#          port: 8080
+#
+#    - ports: # this is to allow internal dns resolution for protected pod
+#        - port: 53
+#          protocol: UDP
+#        - port: 53
+#          protocol: TCP
