@@ -38,7 +38,7 @@ object LauncherBackend extends JsonSupport with Logging {
     val route =
       path(SegmentBackendApiVersion) {
         get {
-          handleExceptions(exceptionHandler) {
+          handleExceptions(exceptionHandler(applicationName)) {
             extractRequest { request =>
               parameters(ParamDataSource.?) { dataSourceOption =>
                 val responseFuture = backend.getResponse(request, dataSourceOption).map(response =>
@@ -59,7 +59,7 @@ object LauncherBackend extends JsonSupport with Logging {
       } ~
         path(SegmentBackendApiVersion / SegmentProtected) {
           get {
-            handleExceptions(exceptionHandler) {
+            handleExceptions(exceptionHandler(applicationName)) {
               extractRequest { request =>
                 parameters(ParamDataSource.?, ParamApiKey.as[String]) { (dataSourceOption, apiKey) =>
                   val responseFuture = backend.getResponseProtected(request, dataSourceOption, apiKey).map(response =>
@@ -114,7 +114,7 @@ object LauncherBackend extends JsonSupport with Logging {
     }
   }
 
-  val exceptionHandler = ExceptionHandler {
+  def exceptionHandler(origin: String) = ExceptionHandler {
     case ae: ApiException =>
       complete(
         HttpResponse(ae.status, entity = HttpEntity(ContentTypes.`application/json`, ae.toJson.toString())))
@@ -122,7 +122,7 @@ object LauncherBackend extends JsonSupport with Logging {
       complete(
         HttpResponse(StatusCodes.InternalServerError,
         entity = HttpEntity(ContentTypes.`application/json`,
-          ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, applicationName).toJson.toString())))
+          ApiException(StatusCodes.InternalServerError.intValue, t.getMessage, origin).toJson.toString())))
   }
 
 }

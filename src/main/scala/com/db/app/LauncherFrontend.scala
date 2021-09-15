@@ -3,9 +3,10 @@ package com.db.app
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse, StatusCodes, Uri}
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.ExceptionHandler
 import akka.stream.Materializer
 import akka.util.ByteString
-import com.db.app.Models.{FrontendResponse, Param}
+import com.db.app.Models.{ApiException, FrontendResponse, Param}
 import com.typesafe.scalalogging.StrictLogging
 import spray.json._
 
@@ -29,8 +30,8 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val backendApiKey = envOrElse("BACKEND_API_KEY", "")
   val mysqlHost = envOrElse("DB_MYSQL_HOST", "0.0.0.0")
   val mysqlPort = envOrElse("DB_MYSQL_PORT", "3306")
-//    val mysqlHost = envOrElse("DB_MYSQL_HOST", "192.168.49.2")
-//    val mysqlPort = envOrElse("DB_MYSQL_PORT", "30306")
+  //    val mysqlHost = envOrElse("DB_MYSQL_HOST", "192.168.49.2")
+  //    val mysqlPort = envOrElse("DB_MYSQL_PORT", "30306")
 
   val backendBaseUrl = s"http://$backendHost:$backendPort"
   val SegmentFrontendApiVersion = "v1"
@@ -42,55 +43,62 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
     val route =
       path(SegmentFrontendApiVersion) {
         get {
-          extractRequest { request =>
-            parameters(ParamDataSource.?) { dataSourceOption =>
-              val params = dataSourceOption.toSeq.map(sourceVal => Param(ParamDataSource, sourceVal))
-              val entityFuture = frontend.getResponse(request, backendBaseUrl, Seq(LauncherBackend.SegmentBackendApiVersion), params).map(frontendResponse =>
-                HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
+          handleExceptions(LauncherBackend.exceptionHandler(applicationName)) {
+            extractRequest { request =>
+              parameters(ParamDataSource.?) { dataSourceOption =>
+                val params = dataSourceOption.toSeq.map(sourceVal => Param(ParamDataSource, sourceVal))
+                val entityFuture = frontend.getResponse(request, backendBaseUrl, Seq(LauncherBackend.SegmentBackendApiVersion), params).map(frontendResponse =>
+                  HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
-              complete(entityFuture)
+                complete(entityFuture)
+              }
             }
           }
         }
       } ~
         path(SegmentFrontendApiVersion / SegmentDirect) {
           get {
-            extractRequest { request =>
-              parameters(ParamDataSource.?) { sourceOption =>
-                val params = sourceOption.toSeq.map(sourceVal => Param(ParamDataSource, sourceVal))
-                val entityFuture = frontend.getResponseDirect(request)
-                  .map(frontendResponse => HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
+            handleExceptions(LauncherBackend.exceptionHandler(applicationName)) {
+              extractRequest { request =>
+                parameters(ParamDataSource.?) { sourceOption =>
+                  val entityFuture = frontend.getResponseDirect(request)
+                    .map(frontendResponse => HttpEntity(ContentTypes.`application/json`, frontendResponse.toJson.toString()))
 
-                complete(entityFuture)
+                  complete(entityFuture)
+                }
               }
             }
           }
         } ~
         path(SegmentFrontendApiVersion / SegmentProtected) {
           get {
-            extractRequest { request =>
-              val entityFuture = frontend.getResponse(
-                request,
-                backendBaseUrl,
-                Seq(SegmentFrontendApiVersion, SegmentProtected),
-                Seq(Param(ParamApiKey, backendApiKey)))
-                .map {
-                  case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
-                  case Left(apiException) =>
-                    HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
-                }
-              complete(entityFuture)
+            handleExceptions(LauncherBackend.exceptionHandler(applicationName)) {
+              extractRequest { request =>
+                val entityFuture = frontend.getResponse(
+                  request,
+                  backendBaseUrl,
+                  Seq(SegmentFrontendApiVersion, SegmentProtected),
+                  Seq(Param(ParamApiKey, backendApiKey)))
+                  .map {
+                    case Right(response) => HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response.toJson.toString()))
+                    case Left(apiException) =>
+                      HttpResponse(apiException.status, entity = HttpEntity(ContentTypes.`application/json`, apiException.toJson.toString()))
+                  }
+                complete(entityFuture)
+              }
             }
           }
         } ~
         path(SegmentFrontendApiVersion / SegmentLocal) {
           get {
-            extractRequest { request =>
-              logger.info(request.uri.toString())
+            handleExceptions(LauncherBackend.exceptionHandler(applicationName)) {
+              extractRequest { request =>
+                logger.info(request.uri.toString())
 
-              val entityFuture = HttpEntity(ContentTypes.`application/json`,
-                FrontendResponse(applicationName, com.db.app.language, version, address, port, None).toJson.toString())
-              complete(entityFuture)
+                val entityFuture = HttpEntity(ContentTypes.`application/json`,
+                  FrontendResponse(applicationName, com.db.app.language, version, address, port, None).toJson.toString())
+                complete(entityFuture)
+              }
             }
           }
         } ~
@@ -104,7 +112,6 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
         path(SegmentHealth) {
           extractRequest { request =>
             logger.info(request.uri.toString())
-
             complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
           }
         }
