@@ -1,19 +1,20 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: {{ .Values.mysql.name }}
+  name: {{ .Values.mysql.name }}-stateful
   labels:
-    name: {{ .Values.mysql.name }}
+    name: {{ .Values.mysql.name }}-stateful
 spec:
-  replicas: {{ .Values.mysql.replicas.min }}
+  serviceName: {{ .Values.mysql.name }}-headless
+  replicas: {{ .Values.mysql.replicas.max }}
   selector:
     matchLabels:
-      name: {{ .Values.mysql.name }}
+      name: {{ .Values.mysql.name }}-stateful
   template:
     metadata:
       labels:
-        name: {{ .Values.mysql.name }}
-      name: {{ .Values.mysql.name }}
+        name: {{ .Values.mysql.name }}-stateful
+      name: {{ .Values.mysql.name }}-stateful
       namespace: default
     spec:
       containers:

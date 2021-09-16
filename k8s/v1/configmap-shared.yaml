@@ -14,5 +14,5 @@ data:
     somecontext.key1=value1
     somecontext.key2=value2
 
-  DB_MYSQL_HOST: "db-mysql-clusterip"
+  DB_MYSQL_HOST: "db-mysql-headless"
   DB_MYSQL_PORT: "3306"

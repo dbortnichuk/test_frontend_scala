@@ -91,7 +91,7 @@ http://protected.bortnichuk.com/v1/protected
 [mysql]
 k create -f k8s/v1/pv-mysql.yaml
 k create -f k8s/v1/pvc-mysql.yaml
-k create -f k8s/v1/deployment-mysql.yaml
+k create -f k8s/v1/statefulset-mysql.yaml
 k create -f k8s/v1/service-mysql-clusterip.yaml
 k create -f k8s/v1/service-mysql-nodeport.yaml
 minikube service db-mysql-nodeport --url
