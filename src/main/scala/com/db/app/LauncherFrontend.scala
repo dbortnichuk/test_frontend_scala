@@ -15,6 +15,10 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Properties.{envOrElse, envOrNone}
 import scala.util.{Failure, Success}
+import fr.davit.akka.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
+import fr.davit.akka.http.metrics.core.HttpMetrics._
+import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
+import io.prometheus.client.CollectorRegistry
 
 
 object LauncherFrontend extends JsonSupport with StrictLogging {
@@ -39,7 +43,7 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
   val frontend = new Frontend(address, port, version, mysqlHost, mysqlPort)
 
   def main(args: Array[String]): Unit = {
-
+    val prometheusRegistry = PrometheusRegistry(new CollectorRegistry(), PrometheusSettings.default)
     val route =
       path(SegmentFrontendApiVersion) {
         get {
@@ -120,8 +124,16 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
             logger.info(request.uri.toString())
             complete(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "OK")))
           }
+        } ~
+        path(SegmentMetrics) {
+          get {
+            metrics(metricsRegistry)
+          }
         }
+
     val interface = "0.0.0.0"
+    val bindingFuture = Http().newMeteredServerAt(interface, port, prometheusRegistry).bindFlow(router.route)
+
     val bindingFuture = Http(system).bindAndHandle(route, interface, port.toInt)
 
     bindingFuture.onComplete {

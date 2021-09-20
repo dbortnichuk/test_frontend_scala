@@ -19,6 +19,7 @@ package object app {
   val SegmentDirect = "direct"
   val SegmentHealth = "health"
   val SegmentReady = "ready"
+  val SegmentMetrics = "metrics"
 
   val ParamDataSourceSimpleVal = "simple"
   val ParamDataSourceVolumeVal = "volume"

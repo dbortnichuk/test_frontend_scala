@@ -12,5 +12,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback"                %  "logback-classic"        % "1.2.3",
   "com.typesafe.scala-logging"    %% "scala-logging"          % "3.9.2",
   "commons-io"                    % "commons-io"              % "2.7",
-  "mysql"                         % "mysql-connector-java"    % "8.0.26"
+  "mysql"                         % "mysql-connector-java"    % "8.0.26",
+  "fr.davit" %% "akka-http-metrics-prometheus" % "1.6.0"
 )
