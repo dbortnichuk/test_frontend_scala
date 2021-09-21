@@ -17,7 +17,9 @@ import scala.util.Properties.{envOrElse, envOrNone}
 import scala.util.{Failure, Success}
 import fr.davit.akka.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.core.HttpMetrics._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives.metrics
 import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
+import fr.davit.akka.http.metrics.prometheus.marshalling.PrometheusMarshallers._
 import io.prometheus.client.CollectorRegistry
 
 
@@ -127,14 +129,17 @@ object LauncherFrontend extends JsonSupport with StrictLogging {
         } ~
         path(SegmentMetrics) {
           get {
-            metrics(metricsRegistry)
+            extractRequest { request =>
+              logger.info(request.uri.toString())
+              metrics(prometheusRegistry)
+            }
           }
         }
 
     val interface = "0.0.0.0"
-    val bindingFuture = Http().newMeteredServerAt(interface, port, prometheusRegistry).bindFlow(router.route)
+    val bindingFuture = Http().newMeteredServerAt(interface, port.toInt, prometheusRegistry).bindFlow(route)
 
-    val bindingFuture = Http(system).bindAndHandle(route, interface, port.toInt)
+//    val bindingFuture = Http(system).bindAndHandle(route, interface, port.toInt)
 
     bindingFuture.onComplete {
       case Success(b) ⇒
