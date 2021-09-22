@@ -98,8 +98,6 @@ minikube service db-mysql-nodeport --url
 
 [network policy]
 
-
-
 k create -f k8s/v1/netpol-mysql.yaml // make mysql available only from backend pods
 
 [helm]

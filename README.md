@@ -32,7 +32,7 @@ kubectl config use-context my-context
 
 --Local--
 minikube start
-minikube start --cpus=2 --memory=3gb --disk-size=25gb
+minikube start --cpus=4 --memory=6gb --disk-size=20gb
 minikube stop
 minikube delete
 minikube ssh
